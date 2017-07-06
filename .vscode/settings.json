@@ -1,0 +1,53 @@
+{
+    "files.associations": {
+        "set": "cpp",
+        "array": "cpp",
+        "istream": "cpp",
+        "memory": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "xlocmes": "cpp",
+        "xlocmon": "cpp",
+        "xlocnum": "cpp",
+        "xloctime": "cpp",
+        "iostream": "cpp",
+        "stdexcept": "cpp",
+        "future": "cpp",
+        "vector": "cpp",
+        "xstring": "cpp",
+        "xutility": "cpp",
+        "xiosbase": "cpp",
+        "cmakeccompilerid.c": "cpp",
+        "string": "cpp",
+        "ostream": "cpp",
+        "forward_list": "cpp",
+        "initializer_list": "cpp",
+        "list": "cpp",
+        "regex": "cpp",
+        "xhash": "cpp",
+        "xtree": "cpp"
+    },
+    "cmake.generator": "Visual Studio 15 2017 Win64",
+    "cmake.toolset": "v141,host=x64",
+    "c-cpp-flylint.debug": false,
+    "c-cpp-flylint.includePaths": [
+        "third_party/",
+        "third_party/glfw-3.2.1.bin.WIN64/include"
+    ],
+    "c-cpp-flylint.clang.standard": [
+        "c++14"
+    ],
+    "c-cpp-flylint.clang.msExtensions": true,
+    "c-cpp-flylint.flexelint.enable": false,
+    "c-cpp-flylint.cppcheck.enable": false,
+    "c-cpp-flylint.clang.warnings": [
+        "all",
+        "extra",
+        "everything",
+        "no-c++98-compat",
+        "no-covered-switch-default",
+        "no-pragma-once-outside-header",
+        "no-exit-time-destructors"
+    ]
+}

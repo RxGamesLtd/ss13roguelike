@@ -6,14 +6,14 @@
 class Renderer
 {
   public:
-    Renderer(GLFWwindow* window, const std::vector<const char*> extensions);
+    Renderer(GLFWwindow* window, const std::vector<const char*>& extensions);
 
   private:
     void _initInstance(const std::vector<const char*> extensions);
     void _initSurface(GLFWwindow* window);
     void _initDevice();
 
-    void _getQueueFamilies(const vk::PhysicalDevice* gpu);
+    void _getQueueFamilies(vk::PhysicalDevice& gpu);
 
   public:
     // Handles block

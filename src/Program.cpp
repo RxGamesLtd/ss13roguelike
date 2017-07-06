@@ -1,11 +1,13 @@
-#include "stdafx.hpp"
+#include "targetver.hpp"
+#include "renderer.hpp"
 
-#include "Renderer.hpp"
-#include "vulkan/vulkan.hpp"
 #include "GLFW/glfw3.h"
-#include "glm.hpp"
+#include "glm/glm.hpp"
+#include "vulkan/vulkan.hpp"
 
-void testStuff(const Renderer& r)
+#include <iostream>
+
+inline void testStuff(const Renderer& r)
 {
     const auto cpci = vk::CommandPoolCreateInfo() //
                         .setQueueFamilyIndex(r._graphicsFamilyIdx) //
@@ -31,18 +33,20 @@ void testStuff(const Renderer& r)
     const auto fci = vk::FenceCreateInfo() //
                        .setFlags(vk::FenceCreateFlags());
 
+    std::vector<vk::CommandBuffer> cbs(commandBuffers.size());
+    std::transform(commandBuffers.begin(), commandBuffers.end(), cbs.begin(), [](const auto& t) { return t.get(); });
     vk::UniqueFence f = r._device->createFenceUnique(fci);
 
     const auto submitInfo = vk::SubmitInfo() //
-                              .setCommandBufferCount(1) //
-                              .setPCommandBuffers(&commandBuffers[0].get());
+                              .setCommandBufferCount(static_cast<uint32_t>(cbs.size())) //
+                              .setPCommandBuffers(cbs.data());
 
     r._queue.submit(submitInfo, f.get());
 
     r._device->waitForFences(std::vector<vk::Fence>{ f.get() }, true, UINT64_MAX);
 }
 
-std::vector<const char*> getRequiredExtensions()
+inline std::vector<const char*> getRequiredExtensions()
 {
     std::vector<const char*> extensions;
 
@@ -59,8 +63,10 @@ std::vector<const char*> getRequiredExtensions()
     return extensions;
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+inline void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    (void)(scancode);
+    (void)(mods);
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -87,7 +93,7 @@ int main()
 
         glfwSetKeyCallback(window, key_callback);
 
-        Renderer r(window, getRequiredExtensions());
+        Renderer render(window, getRequiredExtensions());
 
         while(!glfwWindowShouldClose(window))
         {

@@ -1,12 +1,12 @@
-#include "stdafx.hpp"
+#include "renderer.hpp"
 
-#include "Renderer.hpp"
 #include "GLFW/glfw3.h"
 #include "vulkan/vulkan.hpp"
 #include <assert.h>
 #include <set>
+#include <iostream>
 
-Renderer::Renderer(GLFWwindow* window, const std::vector<const char*> extensions)
+Renderer::Renderer(GLFWwindow* window, const std::vector<const char*>& extensions)
 {
     _initInstance(extensions);
     _initSurface(window);
@@ -67,24 +67,25 @@ void Renderer::_initInstance(const std::vector<const char*> extensions)
 
 void Renderer::_initSurface(GLFWwindow* window)
 {
-    VkSurfaceKHR surf = nullptr;
-    if(glfwCreateWindowSurface(_instance.get(), window, nullptr, &surf) != VK_SUCCESS)
+    VkSurfaceKHR surf{};
+    if(glfwCreateWindowSurface(VkInstance(_instance.get()), window, nullptr, &surf) != VK_SUCCESS)
     {
         std::cout << "Error creating surface" << std::endl;
         std::exit(-1);
     }
     vk::SurfaceKHRDeleter deleter(_instance.get(), nullptr);
-    _surface = std::move(vk::UniqueSurfaceKHR(surf, deleter));
+    _surface = vk::UniqueSurfaceKHR(surf, deleter);
 }
 
-void Renderer::_getQueueFamilies(const vk::PhysicalDevice* gpu)
+void Renderer::_getQueueFamilies(vk::PhysicalDevice& gpu)
 {
-    const auto queues = gpu->getQueueFamilyProperties();
+    const auto queues = gpu.getQueueFamilyProperties();
     {
         const auto q = std::find_if(queues.begin(), queues.end(), [&](const auto& d) {
-            const auto curIndex = static_cast<uint32_t>(&d - &queues[0]);
-            bool presentSupport = glfwGetPhysicalDevicePresentationSupport(_instance.get(), *gpu, curIndex);
-            bool surfaceSupport = !_surface || gpu->getSurfaceSupportKHR(curIndex, _surface.get());
+            //const auto curIndex = static_cast<uint32_t>(&d - &queues[0]);
+            // bool presentSupport =
+            //   glfwGetPhysicalDevicePresentationSupport(VkInstance(_instance.get()), VkPhysicalDevice(gpu), curIndex);
+            // bool surfaceSupport = !_surface || gpu->getSurfaceSupportKHR(curIndex, _surface.get());
             return d.queueFlags & vk::QueueFlagBits::eGraphics;
         });
 
@@ -98,8 +99,9 @@ void Renderer::_getQueueFamilies(const vk::PhysicalDevice* gpu)
     {
         const auto q = std::find_if(queues.begin(), queues.end(), [&](const auto& d) {
             const auto curIndex = static_cast<uint32_t>(&d - &queues[0]);
-            bool presentSupport = glfwGetPhysicalDevicePresentationSupport(_instance.get(), *gpu, curIndex);
-            bool surfaceSupport = !_surface || gpu->getSurfaceSupportKHR(curIndex, _surface.get());
+            bool presentSupport =
+              glfwGetPhysicalDevicePresentationSupport(VkInstance(_instance.get()), VkPhysicalDevice(gpu), curIndex);
+            bool surfaceSupport = !_surface || gpu.getSurfaceSupportKHR(curIndex, _surface.get());
             return surfaceSupport && presentSupport;
         });
 
@@ -117,14 +119,14 @@ void Renderer::_initDevice()
     auto gpus = _instance->enumeratePhysicalDevices();
 
     // Find physical device
-    const vk::PhysicalDevice* gpu = nullptr;
+    vk::PhysicalDevice* gpu = nullptr;
     {
-        for(const auto& device : gpus)
+        for(auto& device : gpus)
         {
             const auto props = device.getProperties();
 
             std::cout << "Device: " << props.deviceName << "\n";
-            std::cout << "\tType:" << (int)props.deviceType << "\n";
+            std::cout << "\tType:" << static_cast<uint32_t>(props.deviceType) << "\n";
             std::cout << "\tDriver:" << props.driverVersion << "\n";
             std::cout << std::endl;
             if(props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
@@ -140,7 +142,7 @@ void Renderer::_initDevice()
     }
 
     // Find appropriate queues
-    _getQueueFamilies(gpu);
+    _getQueueFamilies(*gpu);
 
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = { _presentFamilyIdx, _graphicsFamilyIdx };
