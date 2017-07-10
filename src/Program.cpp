@@ -1,9 +1,12 @@
-#include "targetver.hpp"
+#include "config.hpp"
 #include "renderer.hpp"
+#include "targetver.hpp"
+
 
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 #include "vulkan/vulkan.hpp"
+
 
 #include <iostream>
 
@@ -11,7 +14,7 @@ inline void testStuff(const Renderer& r)
 {
     const auto cpci = vk::CommandPoolCreateInfo() //
                         .setQueueFamilyIndex(r._graphicsFamilyIdx) //
-                        .setFlags(vk::CommandPoolCreateFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer));
+                        .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
     const auto commandPool = r._device->createCommandPoolUnique(cpci);
 
@@ -24,7 +27,7 @@ inline void testStuff(const Renderer& r)
     const auto commandBuffers = r._device->allocateCommandBuffersUnique(cbci);
 
     const auto cbbi = vk::CommandBufferBeginInfo();
-    //.setFlags(vk::CommandBufferUsageFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+    //.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
     commandBuffers[0]->begin(cbbi);
 
@@ -46,19 +49,29 @@ inline void testStuff(const Renderer& r)
     r._device->waitForFences(std::vector<vk::Fence>{ f.get() }, true, UINT64_MAX);
 }
 
-inline std::vector<const char*> getRequiredExtensions()
+inline std::vector<const char*> getRequiredInstanceExtensions()
 {
     std::vector<const char*> extensions;
 
     unsigned int glfwExtensionCount = 0;
-    const char** glfwExtensions;
+    const char** glfwExtensions = nullptr;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
     extensions.assign(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-#ifdef _DEBUG
-    extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-#endif
+    if /*constexpr*/ (Config::isDebug)
+    {
+        extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+    }
+
+    return extensions;
+}
+
+inline std::vector<const char*> getRequiredDeviceExtensions()
+{
+    std::vector<const char*> extensions;
+
+    extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
     return extensions;
 }
@@ -89,15 +102,23 @@ int main()
 
         // glfwWindowHint(GLFW_RESIZABLE, 0);
         // glfwWindowHint(GLFW_RESIZABLE, 0);
-        auto* window = glfwCreateWindow(800, 600, "TestApp", nullptr, nullptr);
+        auto* window = glfwCreateWindow(1024, 768, "TestApp:Initing", nullptr, nullptr);
 
         glfwSetKeyCallback(window, key_callback);
 
-        Renderer render(window, getRequiredExtensions());
+        auto instanceExtensions = getRequiredInstanceExtensions();
+        auto deviceExtensions = getRequiredDeviceExtensions();
+        // init renderer
+        Renderer renderer(window, instanceExtensions, deviceExtensions);
+        // init done
+        glfwSetWindowTitle(window, "TestApp");
 
         while(!glfwWindowShouldClose(window))
         {
             glfwPollEvents();
+            renderer._frameStartTime = std::chrono::high_resolution_clock::now();
+
+            // do render
         }
     }
     catch(std::runtime_error e)

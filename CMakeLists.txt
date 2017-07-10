@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+string(REPLACE "\\" "/" VulkanPath $ENV{VULKAN_SDK})
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;")
 set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE INTERNAL FORCE )
 set(COTIRE_ADDITIONAL_PREFIX_HEADER_IGNORE_PATH "C:/Program Files (x86)/Windows Kits/10/Include")
 
@@ -15,11 +16,13 @@ include_directories(
 )
 
 link_directories(
-    "$ENV{VULKAN_SDK}/Lib"
+    "${VulkanPath}/Lib"
     "third_party/glfw-3.2.1.bin.WIN64/lib-vc2015"
 )
 
 set(src
+    "src/config.hpp"
+    "src/glfw_wrapper.hpp"
     "src/program.cpp"
     "src/atmo_module.cpp"
     "src/atmo_module.hpp"
@@ -30,7 +33,10 @@ set(src
 add_executable(SS13RogueLike ${src})
 
 target_link_libraries(SS13RogueLike
-    PUBLIC vulkan-1.lib glfw3.lib
+    PRIVATE
+    vulkan-1
+    glfw3
+    shaderc_combined
 )
 
 set_target_properties(SS13RogueLike
