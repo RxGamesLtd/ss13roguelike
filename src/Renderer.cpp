@@ -692,7 +692,7 @@ void Renderer::initCommandBuffers()
 {
      const auto cbci = vk::CommandBufferAllocateInfo() //
                         .setCommandPool(m_commandPool.get()) //
-                        .setCommandBufferCount(1) //
+                        .setCommandBufferCount(m_framebuffers.size()) //
                         .setLevel(vk::CommandBufferLevel::ePrimary);
 
     m_commandBuffers = m_device->allocateCommandBuffersUnique(cbci);
