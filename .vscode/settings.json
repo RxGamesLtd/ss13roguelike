@@ -70,28 +70,16 @@
         "xmemory": "cpp",
         "xmemory0": "cpp",
         "xstddef": "cpp",
-        "xtr1common": "cpp"
+        "xtr1common": "cpp",
+        "filesystem": "cpp",
+        "codecvt": "cpp",
+        "clocale": "cpp",
+        "optional": "cpp",
+        "shared_mutex": "cpp",
+        "string_view": "cpp"
     },
-    "cmake.generator": "Visual Studio 15 2017 Win64",
-    "cmake.toolset": "v141,host=x64",
-    "c-cpp-flylint.debug": false,
-    "c-cpp-flylint.includePaths": [
-        "third_party/",
-        "third_party/glfw-3.2.1.bin.WIN64/include"
+    "cmake.configureArgs": [
+        "-Wno-dev"
     ],
-    "c-cpp-flylint.clang.standard": [
-        "c++14"
-    ],
-    "c-cpp-flylint.clang.msExtensions": true,
-    "c-cpp-flylint.flexelint.enable": false,
-    "c-cpp-flylint.cppcheck.enable": false,
-    "c-cpp-flylint.clang.warnings": [
-        "all",
-        "extra",
-        "everything",
-        "no-c++98-compat",
-        "no-covered-switch-default",
-        "no-pragma-once-outside-header",
-        "no-exit-time-destructors"
-    ]
+    "C_Cpp.default.cppStandard": "c++17"
 }

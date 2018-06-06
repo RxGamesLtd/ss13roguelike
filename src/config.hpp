@@ -3,11 +3,10 @@
 namespace Config
 {
 constexpr bool isDebug =
-#if defined(_DEBUG)
+#if defined(DEBUG_VULKAN)
     true;
 #else
     false;
 #endif
-
 
 }

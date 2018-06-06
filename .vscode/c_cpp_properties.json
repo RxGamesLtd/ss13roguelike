@@ -1,52 +1,17 @@
 {
     "configurations": [
         {
-            "name": "Mac",
-            "includePath": [
-                "${workspaceRoot}",
-                "/usr/include",
-                "/usr/local/include"
-            ],
-            "defines": [],
-            "intelliSenseMode": "clang-x64",
-            "browse": {
-                "path": [
-                    "/usr/include",
-                    "/usr/local/include"
-                ],
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            }
-        },
-        {
-            "name": "Linux",
-            "includePath": [
-                "${workspaceRoot}",
-                "/usr/include",
-                "/usr/local/include"
-            ],
-            "defines": [],
-            "intelliSenseMode": "clang-x64",
-            "browse": {
-                "path": [
-                    "/usr/include",
-                    "/usr/local/include"
-                ],
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            }
-        },
-        {
             "name": "Win32",
             "includePath": [
                 "${workspaceRoot}",
                 "${workspaceRoot}/third_party",
-                "${workspaceRoot}/third_party/glfw-3.2.1.bin.WIN64/include",
-                "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.10.25017/include/*",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/um",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/ucrt",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/shared",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/winrt"
+                "${workspaceRoot}/third_party/glfw/include",
+                "C:/VulkanSDK/1.0.65.1/Include",
+                "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.12.25827/include/*",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/um",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt"
             ],
             "defines": [
                 "_DEBUG",
@@ -57,15 +22,19 @@
             "browse": {
                 "path": [
                     "${workspaceRoot}",
-                    "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.10.25017/include/*",
-                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/um",
-                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/ucrt",
-                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/shared",
-                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.14393.0/winrt"
+                    "${workspaceRoot}/third_party",
+                    "${workspaceRoot}/third_party/glfw/include",
+                    "C:/VulkanSDK/1.0.65.1/Include",
+                    "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.12.25827/include/*",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/um",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
+                    "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt"
                 ],
                 "limitSymbolsToIncludedHeaders": false,
                 "databaseFilename": ""
             }
         }
-    ]
+    ],
+    "version": 4
 }

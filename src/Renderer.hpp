@@ -1,9 +1,10 @@
 #pragma once
 
-#include "glfw_wrapper.hpp"
 #include "vulkan/vulkan.hpp"
 
 #include <chrono>
+
+struct GLFWwindow;
 
 class Renderer
 {
@@ -11,49 +12,60 @@ public:
     Renderer(GLFWwindow* window, const std::vector<const char*>& instanceExtensions,
              const std::vector<const char*>& requestedDeviceExtensions);
 
-    bool isValid() { return _isInited; }
+    bool isValid() { return m_isInited; }
 
 private:
-    void _initInstance(const std::vector<const char*>& instanceExtensions);
-    void _initSurface(GLFWwindow* window);
-    void _initDevice(const std::vector<const char*>& requestedDeviceExtensions);
-    void _initSwapchain(vk::Extent2D desiredExtent);
-    void _initImageViews();
-    void _initRenderPass();
-    void _initPipeline();
-    void _initFramebuffers();
+    void initInstance(const std::vector<const char*>& instanceExtensions);
+    void initSurface(GLFWwindow* window);
+    void initDevice(const std::vector<const char*>& requestedDeviceExtensions);
+    void initSwapchain(vk::Extent2D desiredExtent);
+    void initImageViews();
+    void initRenderPass();
+    void initPipeline();
+    void initFramebuffers();
+    void initCommandPool();
+    void initCommandBuffers();
+    void initSemaphores();
 
-    bool _fillQueueFamilies(vk::PhysicalDevice& gpu);
-    bool _isDeviceCompatible(const vk::PhysicalDevice& device,
+    bool fillQueueFamilies(vk::PhysicalDevice& gpu);
+    bool isDeviceCompatible(const vk::PhysicalDevice& device,
                              const std::vector<const char*>& requestedDeviceExtensions);
 
 public:
     // Instance block
-    vk::UniqueInstance _instance;
-    vk::PhysicalDevice _gpu;
-    vk::UniqueDevice _device;
-    vk::UniqueSurfaceKHR _surface;
-    vk::Queue _queue;
-    vk::Queue _presentQueue;
-    std::vector<vk::UniqueFramebuffer> _framebuffers;
+    vk::UniqueInstance m_instance;
+    vk::PhysicalDevice m_gpu;
+    vk::UniqueDevice m_device;
+    vk::UniqueSurfaceKHR m_surface;
+    vk::Queue m_queue;
+    vk::Queue m_presentQueue;
+    std::vector<vk::UniqueFramebuffer> m_framebuffers;
 
     // pipeline
-    vk::UniquePipelineLayout _pipelineLayout;
-    vk::UniquePipelineCache _pipelineCache;
-    vk::UniqueRenderPass _renderPass;
-    vk::UniquePipeline _graphicsPipeline;
+    vk::UniquePipelineLayout m_pipelineLayout;
+    vk::UniquePipelineCache m_pipelineCache;
+    vk::UniqueRenderPass m_renderPass;
+    vk::UniquePipeline m_graphicsPipeline;
     // Swapchain block
-    vk::UniqueSwapchainKHR _swapchain;
-    std::vector<vk::Image> _swapchainImages;
-    std::vector<vk::UniqueImageView> _swapChainImageViews;
-    vk::Format _swapchainFormat;
-    vk::Extent2D _swapchainExtent;
+    vk::UniqueSwapchainKHR m_swapchain;
+    std::vector<vk::Image> m_swapchainImages;
+    std::vector<vk::UniqueImageView> m_swapChainImageViews;
+    vk::Format m_swapchainFormat;
+    vk::Extent2D m_swapchainExtent;
+
+    //Commands
+    vk::UniqueCommandPool m_commandPool;
+    std::vector<vk::UniqueCommandBuffer> m_commandBuffers;
+
+    //Synchronzation
+    vk::UniqueSemaphore m_renderFinishedSemaphore;
+    vk::UniqueSemaphore m_imageAvailableSemaphore;
 
     // Props
-    uint32_t _graphicsFamilyIdx = 0;
-    uint32_t _presentFamilyIdx = 0;
+    uint32_t m_graphicsFamilyIdx = 0;
+    uint32_t m_presentFamilyIdx = 0;
 
     // init
-    bool _isInited;
-    std::chrono::time_point<std::chrono::high_resolution_clock> _frameStartTime;
+    bool m_isInited;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_frameStartTime;
 };

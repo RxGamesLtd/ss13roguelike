@@ -2,64 +2,78 @@
 #include "renderer.hpp"
 #include "targetver.hpp"
 
-
+#define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 #include "vulkan/vulkan.hpp"
 
-
 #include <iostream>
 
-inline void testStuff(const Renderer& r)
+static void testStuff(const Renderer& r)
 {
-    const auto cpci = vk::CommandPoolCreateInfo() //
-                        .setQueueFamilyIndex(r._graphicsFamilyIdx) //
-                        .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+    auto imageIndex = r.m_device->acquireNextImageKHR(r.m_swapchain.get(), UINT64_MAX, r.m_imageAvailableSemaphore.get(), nullptr);
+    for (int i = 0; i < r.m_commandBuffers.size(); ++i)
+    {
+        const auto cbbi = vk::CommandBufferBeginInfo()
+                          .setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
 
-    const auto commandPool = r._device->createCommandPoolUnique(cpci);
+        r.m_commandBuffers[i]->begin(cbbi);
 
-    // create buffers
-    const auto cbci = vk::CommandBufferAllocateInfo() //
-                        .setCommandPool(commandPool.get()) //
-                        .setCommandBufferCount(1) //
-                        .setLevel(vk::CommandBufferLevel::ePrimary);
+        const auto clearValue = vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 0.f}));
+        const auto rpbi = vk::RenderPassBeginInfo()
+                          .setRenderPass(r.m_renderPass.get())
+                          .setFramebuffer(r.m_framebuffers[i].get())
+                          .setRenderArea(vk::Rect2D({ 0, 0 }, r.m_swapchainExtent))
+                          .setClearValueCount(1)
+                          .setPClearValues(&clearValue);
 
-    const auto commandBuffers = r._device->allocateCommandBuffersUnique(cbci);
+        r.m_commandBuffers[i]->beginRenderPass(rpbi, vk::SubpassContents::eInline);
 
-    const auto cbbi = vk::CommandBufferBeginInfo();
-    //.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        r.m_commandBuffers[i]->bindPipeline(vk::PipelineBindPoint::eGraphics, r.m_graphicsPipeline.get());
 
-    commandBuffers[0]->begin(cbbi);
+        r.m_commandBuffers[i]->draw(3, 1, 0, 0);
 
-    commandBuffers[0]->end();
+        r.m_commandBuffers[i]->endRenderPass();
+        r.m_commandBuffers[i]->end();
+    }
 
-    const auto fci = vk::FenceCreateInfo() //
-                       .setFlags(vk::FenceCreateFlags());
+    std::vector<vk::CommandBuffer> cbs(r.m_commandBuffers.size());
+    std::transform(r.m_commandBuffers.begin(), r.m_commandBuffers.end(), cbs.begin(), [](const auto& t)
+    {
+        return t.get();
+    });
 
-    std::vector<vk::CommandBuffer> cbs(commandBuffers.size());
-    std::transform(commandBuffers.begin(), commandBuffers.end(), cbs.begin(), [](const auto& t) { return t.get(); });
-    vk::UniqueFence f = r._device->createFenceUnique(fci);
+    std::vector<vk::PipelineStageFlags> waitStages = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
 
-    const auto submitInfo = vk::SubmitInfo() //
-                              .setCommandBufferCount(static_cast<uint32_t>(cbs.size())) //
-                              .setPCommandBuffers(cbs.data());
+    const auto submitInfo = vk::SubmitInfo()                                          //
+                            .setCommandBufferCount(static_cast<uint32_t>(cbs.size())) //
+                            .setPCommandBuffers(cbs.data())
+                            .setPWaitSemaphores(&r.m_imageAvailableSemaphore.get())
+                            .setWaitSemaphoreCount(1)
+                            .setPWaitDstStageMask(waitStages.data())
+                            .setPSignalSemaphores(&r.m_renderFinishedSemaphore.get())
+                            .setSignalSemaphoreCount(1);
 
-    r._queue.submit(submitInfo, f.get());
+    r.m_queue.submit(submitInfo, nullptr);
 
-    r._device->waitForFences(std::vector<vk::Fence>{ f.get() }, true, UINT64_MAX);
+    const auto presentInfo = vk::PresentInfoKHR() //
+                                .setSwapchainCount(1) //
+                                .setPSwapchains(&r.m_swapchain.get()) //
+                                .setPImageIndices(&imageIndex.value);
+    r.m_presentQueue.presentKHR(presentInfo);
 }
 
-inline std::vector<const char*> getRequiredInstanceExtensions()
+inline std::vector<const char*>getRequiredInstanceExtensions()
 {
     std::vector<const char*> extensions;
 
     unsigned int glfwExtensionCount = 0;
-    const char** glfwExtensions = nullptr;
+    const char** glfwExtensions     = nullptr;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
     extensions.assign(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    if /*constexpr*/ (Config::isDebug)
+    if constexpr (Config::isDebug)
     {
         extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
     }
@@ -67,7 +81,7 @@ inline std::vector<const char*> getRequiredInstanceExtensions()
     return extensions;
 }
 
-inline std::vector<const char*> getRequiredDeviceExtensions()
+inline std::vector<const char*>getRequiredDeviceExtensions()
 {
     std::vector<const char*> extensions;
 
@@ -76,11 +90,12 @@ inline std::vector<const char*> getRequiredDeviceExtensions()
     return extensions;
 }
 
-inline void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+inline void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     (void)(scancode);
     (void)(mods);
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+
+    if ((key == GLFW_KEY_ESCAPE) && (action == GLFW_PRESS))
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
@@ -88,7 +103,7 @@ inline void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main()
 {
-    if(!glfwInit())
+    if (!glfwInit())
     {
         std::cout << "Error on init GLFW" << std::endl;
         std::exit(-1);
@@ -96,32 +111,36 @@ int main()
     try
     {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE,  GLFW_FALSE);
+
+        // glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
         // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
         // glfwWindowHint(GLFW_RESIZABLE, 0);
         // glfwWindowHint(GLFW_RESIZABLE, 0);
-        auto* window = glfwCreateWindow(1024, 768, "TestApp:Initing", nullptr, nullptr);
+        auto window = glfwCreateWindow(1024, 768, "TestApp:Initilizing", nullptr, nullptr);
 
-        glfwSetKeyCallback(window, key_callback);
+        glfwSetKeyCallback(window, keyCallback);
 
         auto instanceExtensions = getRequiredInstanceExtensions();
-        auto deviceExtensions = getRequiredDeviceExtensions();
+        auto deviceExtensions   = getRequiredDeviceExtensions();
+
         // init renderer
         Renderer renderer(window, instanceExtensions, deviceExtensions);
+
         // init done
         glfwSetWindowTitle(window, "TestApp");
 
-        while(!glfwWindowShouldClose(window))
+        while (!glfwWindowShouldClose(window))
         {
             glfwPollEvents();
-            renderer._frameStartTime = std::chrono::high_resolution_clock::now();
+            renderer.m_frameStartTime = std::chrono::high_resolution_clock::now();
 
             // do render
+            testStuff(renderer);
         }
     }
-    catch(std::runtime_error e)
+    catch (std::runtime_error e)
     {
         std::cout << e.what() << std::endl;
     }
