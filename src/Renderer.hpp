@@ -23,6 +23,8 @@ public:
     void endRender();
     void present();
 
+    void waitForIdle();
+
 private:
     void initInstance(const std::vector<const char*>& instanceExtensions);
     void initSurface(GLFWwindow* window);
@@ -31,7 +33,7 @@ private:
     void initImageViews();
     void initPipelineCache();
     void initCommandPool();
-    void initSemaphores();
+    void initSyncObjects();
 
     void initRenderPass();
     void initPipeline(const Material& mat);
@@ -71,14 +73,17 @@ public:
     std::vector<vk::UniqueCommandBuffer> m_commandBuffers;
 
     //Synchronization
-    vk::UniqueSemaphore m_renderFinishedSemaphore;
-    vk::UniqueSemaphore m_imageAvailableSemaphore;
+    std::vector<vk::UniqueSemaphore> m_renderFinishedSemaphores;
+    std::vector<vk::UniqueSemaphore> m_imageAvailableSemaphores;
+    std::vector<vk::UniqueFence> m_inFlightFences;
 
     // Props
     uint32_t m_graphicsFamilyIdx = 0;
     uint32_t m_presentFamilyIdx = 0;
 
+    // Frame handling
     uint32_t m_currentImageIndex = -1;
+    uint32_t m_currentFrameIndex = 0;
 
     // init
     bool m_isInited;

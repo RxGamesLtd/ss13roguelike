@@ -29,7 +29,7 @@ Renderer::Renderer(GLFWwindow* window, const std::vector<const char*>& instanceE
         initSwapchain(getWindowSize(window));
         initImageViews();
         initCommandPool();
-        initSemaphores();
+        initSyncObjects();
 
         m_isInited = true;
     }
@@ -412,7 +412,10 @@ void Renderer::prepairFor(const Material& mat)
 
 void Renderer::beginRender()
 {
-    auto imageIndex = m_device->acquireNextImageKHR(m_swapchain.get(), UINT64_MAX, m_imageAvailableSemaphore.get(), nullptr);
+    m_device->waitForFences(m_inFlightFences[m_currentFrameIndex].get(), true, UINT64_MAX);
+    m_device->resetFences(m_inFlightFences[m_currentFrameIndex].get());
+
+    auto imageIndex = m_device->acquireNextImageKHR(m_swapchain.get(), UINT64_MAX, m_imageAvailableSemaphores[m_currentFrameIndex].get(), nullptr);
 
     if(imageIndex.result != vk::Result::eSuccess)
     {
@@ -449,13 +452,13 @@ void Renderer::endRender()
     const auto submitInfo = vk::SubmitInfo()
                             .setCommandBufferCount(1)
                             .setPCommandBuffers(&m_commandBuffers[m_currentImageIndex].get())
-                            .setPWaitSemaphores(&m_imageAvailableSemaphore.get())
+                            .setPWaitSemaphores(&m_imageAvailableSemaphores[m_currentFrameIndex].get())
                             .setWaitSemaphoreCount(1)
                             .setPWaitDstStageMask(waitStages.data())
-                            .setPSignalSemaphores(&m_renderFinishedSemaphore.get())
+                            .setPSignalSemaphores(&m_renderFinishedSemaphores[m_currentFrameIndex].get())
                             .setSignalSemaphoreCount(1);
 
-    m_queue.submit(submitInfo, nullptr);
+    m_queue.submit(submitInfo, m_inFlightFences[m_currentImageIndex].get());
 }
 
 void Renderer::present()
@@ -463,8 +466,16 @@ void Renderer::present()
     const auto presentInfo = vk::PresentInfoKHR()
                                 .setSwapchainCount(1)
                                 .setPSwapchains(&m_swapchain.get())
-                                .setPImageIndices(&m_currentImageIndex);
+                                .setPImageIndices(&m_currentImageIndex)
+                                .setPWaitSemaphores(&m_renderFinishedSemaphores[m_currentFrameIndex].get())
+                                .setWaitSemaphoreCount(1);
     m_presentQueue.presentKHR(presentInfo);
+    m_currentFrameIndex = (m_currentFrameIndex + 1) % m_inFlightFences.size();
+}
+
+void Renderer::waitForIdle()
+{
+    m_device->waitIdle();
 }
 
 void Renderer::initRenderPass()
@@ -685,9 +696,15 @@ void Renderer::initCommandBuffers()
     m_commandBuffers = m_device->allocateCommandBuffersUnique(cbci);
 }
 
-void Renderer::initSemaphores()
+void Renderer::initSyncObjects()
 {
     const auto sci = vk::SemaphoreCreateInfo();
-    m_imageAvailableSemaphore = m_device->createSemaphoreUnique(sci);
-    m_renderFinishedSemaphore = m_device->createSemaphoreUnique(sci);
+    const auto fci = vk::FenceCreateInfo()
+        .setFlags(vk::FenceCreateFlagBits::eSignaled);
+    for(size_t i = 0; i < 3; ++i)
+    {
+        m_imageAvailableSemaphores.push_back(m_device->createSemaphoreUnique(sci));
+        m_renderFinishedSemaphores.push_back( m_device->createSemaphoreUnique(sci));
+        m_inFlightFences.push_back(m_device->createFenceUnique(fci));
+    }
 }

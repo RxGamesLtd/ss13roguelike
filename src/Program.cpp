@@ -61,6 +61,7 @@ inline void keyCallback(GLFWwindow* window, int key, int scancode, int action, i
 
 int main()
 {
+    std::ios_base::sync_with_stdio(false);
     if (!glfwInit())
     {
         std::cout << "Error on init GLFW" << std::endl;
@@ -100,7 +101,13 @@ int main()
 
             // do render
             testStuff(renderer);
+
+            auto renderTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::high_resolution_clock::now() - renderer.m_frameStartTime).count();
+            double renderTimeD = renderTime / 1000000.0;
+            std::cout << "TPF " << renderTimeD << " FPS " << (1 / renderTimeD) << "\n";
         }
+        renderer.waitForIdle();
     }
     catch (std::runtime_error e)
     {
