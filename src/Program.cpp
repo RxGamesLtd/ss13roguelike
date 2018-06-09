@@ -1,5 +1,7 @@
 #include "config.hpp"
 #include "renderer.hpp"
+#include "material.hpp"
+
 #include "targetver.hpp"
 
 #define GLFW_INCLUDE_VULKAN
@@ -9,58 +11,14 @@
 
 #include <iostream>
 
-static void testStuff(const Renderer& r)
+static void testStuff(Renderer& r)
 {
-    auto imageIndex = r.m_device->acquireNextImageKHR(r.m_swapchain.get(), UINT64_MAX, r.m_imageAvailableSemaphore.get(), nullptr);
-    for (int i = 0; i < r.m_commandBuffers.size(); ++i)
-    {
-        const auto cbbi = vk::CommandBufferBeginInfo()
-                          .setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+    r.beginRender();
 
-        r.m_commandBuffers[i]->begin(cbbi);
+    r.m_commandBuffers[r.m_currentImageIndex]->draw(3, 1, 0, 0);
 
-        const auto clearValue = vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 0.f}));
-        const auto rpbi = vk::RenderPassBeginInfo()
-                          .setRenderPass(r.m_renderPass.get())
-                          .setFramebuffer(r.m_framebuffers[i].get())
-                          .setRenderArea(vk::Rect2D({ 0, 0 }, r.m_swapchainExtent))
-                          .setClearValueCount(1)
-                          .setPClearValues(&clearValue);
-
-        r.m_commandBuffers[i]->beginRenderPass(rpbi, vk::SubpassContents::eInline);
-
-        r.m_commandBuffers[i]->bindPipeline(vk::PipelineBindPoint::eGraphics, r.m_graphicsPipeline.get());
-
-        r.m_commandBuffers[i]->draw(3, 1, 0, 0);
-
-        r.m_commandBuffers[i]->endRenderPass();
-        r.m_commandBuffers[i]->end();
-    }
-
-    std::vector<vk::CommandBuffer> cbs(r.m_commandBuffers.size());
-    std::transform(r.m_commandBuffers.begin(), r.m_commandBuffers.end(), cbs.begin(), [](const auto& t)
-    {
-        return t.get();
-    });
-
-    std::vector<vk::PipelineStageFlags> waitStages = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
-
-    const auto submitInfo = vk::SubmitInfo()                                          //
-                            .setCommandBufferCount(static_cast<uint32_t>(cbs.size())) //
-                            .setPCommandBuffers(cbs.data())
-                            .setPWaitSemaphores(&r.m_imageAvailableSemaphore.get())
-                            .setWaitSemaphoreCount(1)
-                            .setPWaitDstStageMask(waitStages.data())
-                            .setPSignalSemaphores(&r.m_renderFinishedSemaphore.get())
-                            .setSignalSemaphoreCount(1);
-
-    r.m_queue.submit(submitInfo, nullptr);
-
-    const auto presentInfo = vk::PresentInfoKHR() //
-                                .setSwapchainCount(1) //
-                                .setPSwapchains(&r.m_swapchain.get()) //
-                                .setPImageIndices(&imageIndex.value);
-    r.m_presentQueue.presentKHR(presentInfo);
+    r.endRender();
+    r.present();
 }
 
 inline std::vector<const char*>getRequiredInstanceExtensions()
@@ -130,6 +88,10 @@ int main()
 
         // init done
         glfwSetWindowTitle(window, "TestApp");
+
+
+        auto mat = Material(renderer, "triangle");
+        renderer.prepairFor(mat);
 
         while (!glfwWindowShouldClose(window))
         {

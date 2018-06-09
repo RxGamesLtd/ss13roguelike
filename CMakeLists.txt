@@ -16,6 +16,8 @@ set(src
     "src/program.cpp"
     "src/atmo_module.cpp"
     "src/atmo_module.hpp"
+    "src/material.cpp"
+    "src/material.hpp"
     "src/renderer.cpp"
     "src/renderer.hpp")
 

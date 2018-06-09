@@ -6,6 +6,8 @@
 
 struct GLFWwindow;
 
+class Material;
+
 class Renderer
 {
 public:
@@ -14,19 +16,29 @@ public:
 
     bool isValid() { return m_isInited; }
 
+    vk::Device getDevice() const { return m_device.get(); }
+
+    void prepairFor(const Material& mat);
+    void beginRender();
+    void endRender();
+    void present();
+
 private:
     void initInstance(const std::vector<const char*>& instanceExtensions);
     void initSurface(GLFWwindow* window);
     void initDevice(const std::vector<const char*>& requestedDeviceExtensions);
     void initSwapchain(vk::Extent2D desiredExtent);
     void initImageViews();
-    void initRenderPass();
-    void initPipeline();
-    void initFramebuffers();
+    void initPipelineCache();
     void initCommandPool();
-    void initCommandBuffers();
     void initSemaphores();
 
+    void initRenderPass();
+    void initPipeline(const Material& mat);
+    void initFramebuffers();
+    void initCommandBuffers();
+
+protected:
     bool fillQueueFamilies(vk::PhysicalDevice& gpu);
     bool isDeviceCompatible(const vk::PhysicalDevice& device,
                              const std::vector<const char*>& requestedDeviceExtensions);
@@ -42,8 +54,9 @@ public:
     std::vector<vk::UniqueFramebuffer> m_framebuffers;
 
     // pipeline
-    vk::UniquePipelineLayout m_pipelineLayout;
     vk::UniquePipelineCache m_pipelineCache;
+    // render pipeline
+    vk::UniquePipelineLayout m_pipelineLayout;
     vk::UniqueRenderPass m_renderPass;
     vk::UniquePipeline m_graphicsPipeline;
     // Swapchain block
@@ -57,13 +70,15 @@ public:
     vk::UniqueCommandPool m_commandPool;
     std::vector<vk::UniqueCommandBuffer> m_commandBuffers;
 
-    //Synchronzation
+    //Synchronization
     vk::UniqueSemaphore m_renderFinishedSemaphore;
     vk::UniqueSemaphore m_imageAvailableSemaphore;
 
     // Props
     uint32_t m_graphicsFamilyIdx = 0;
     uint32_t m_presentFamilyIdx = 0;
+
+    uint32_t m_currentImageIndex = -1;
 
     // init
     bool m_isInited;
