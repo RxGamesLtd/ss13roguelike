@@ -28,10 +28,12 @@ set_target_properties(SS13RogueLike PROPERTIES
     CXX_STANDARD 17
     OUTPUT_NAME_DEBUG "SS13RogueLike_d"
     OUTPUT_NAME_RELEASE "SS13RogueLike")
+file(COPY "src/shaders" DESTINATION ${CMAKE_BINARY_DIR})
 
 install(TARGETS SS13RogueLike
     RUNTIME DESTINATION "bin"
     LIBRARY DESTINATION "bin"
     ARCHIVE DESTINATION "bin")
+install(DIRECTORY "src/shaders" DESTINATION "bin")
 
 cotire(SS13RogueLike)

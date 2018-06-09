@@ -6,7 +6,9 @@
 #include <fstream>
 #include <iostream>
 
-static std::string readFile(const std::string& filename)
+namespace
+{
+std::string readFile(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -26,6 +28,16 @@ static std::string readFile(const std::string& filename)
     return { buffer.begin(), buffer.end() };
 }
 
+vk::UniqueShaderModule createShaderModule(const vk::Device& device, const std::vector<uint32_t>& code)
+{
+    auto createInfo = vk::ShaderModuleCreateInfo();
+    createInfo.setCodeSize(code.size() * sizeof(uint32_t));
+    createInfo.setPCode(code.data());
+
+    return device.createShaderModuleUnique(createInfo);
+}
+}
+
 Material::Material(const Renderer& render, const std::string& shaderName)
     : m_renderer(render)
     , m_shaderName(shaderName)
@@ -33,19 +45,10 @@ Material::Material(const Renderer& render, const std::string& shaderName)
     compileShaders();
 }
 
-vk::UniqueShaderModule Material::createShaderModule(const vk::Device& device, const std::vector<uint32_t>& code) const
-{
-    auto createInfo = vk::ShaderModuleCreateInfo()
-                        .setCodeSize(code.size() * sizeof(uint32_t))
-                        .setPCode(code.data());
-
-    return device.createShaderModuleUnique(createInfo);
-}
-
 void Material::compileShaders()
 {
-    auto vertShaderCode = readFile(std::string("src/shaders/") + m_shaderName + std::string(".vert"));
-    auto fragShaderCode = readFile(std::string("src/shaders/") + m_shaderName + std::string(".frag"));
+    const auto vertShaderCode = readFile(std::string("shaders/") + m_shaderName + std::string(".vert"));
+    const auto fragShaderCode = readFile(std::string("shaders/") + m_shaderName + std::string(".frag"));
 
     shaderc::Compiler shaderCompiler;
     shaderc::CompileOptions shaderCompilerOptions;

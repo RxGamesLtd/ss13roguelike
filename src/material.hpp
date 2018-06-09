@@ -19,7 +19,6 @@ public:
 
 protected:
     void compileShaders();
-    vk::UniqueShaderModule createShaderModule(const vk::Device& device, const std::vector<uint32_t>& code) const;
 
 private:
     const Renderer& m_renderer;

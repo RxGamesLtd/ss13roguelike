@@ -7,7 +7,7 @@ set_target_properties(glfw PROPERTIES
 file(COPY ${GLFW_DLL} DESTINATION ${CMAKE_BINARY_DIR})
 install(FILES ${GLFW_DLL} DESTINATION "bin")
 
-string(REPLACE "\\" "/" VulkanPath $ENV{VULKAN_SDK})
+file(TO_CMAKE_PATH $ENV{VULKAN_SDK} VulkanPath)
 add_library(vulkan STATIC IMPORTED GLOBAL)
 set_target_properties(vulkan PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${VulkanPath}/Include"
@@ -24,7 +24,7 @@ set_target_properties(gsl PROPERTIES
 set(SHADERC_SKIP_INSTALL ON)
 set(SHADERC_SKIP_TESTS ON)
 set(SHADERC_ENABLE_SHARED_CRT ON)
-string(REPLACE "\\" "/" VulkanPath $ENV{VULKAN_SDK})
+file(TO_CMAKE_PATH $ENV{VULKAN_SDK} VulkanPath)
 add_subdirectory("${VulkanPath}/shaderc/" shaderc EXCLUDE_FROM_ALL)
 
 add_library(libshaderc INTERFACE IMPORTED GLOBAL)

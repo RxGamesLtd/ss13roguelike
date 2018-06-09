@@ -5,6 +5,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
+#include "vulkan/vulkan.hpp"
 
 #include <assert.h>
 #include <iostream>
@@ -67,22 +68,22 @@ void Renderer::initInstance(const std::vector<const char*>& instanceExtensions)
     // VkApplicationInfo allows the programmer to specifiy some basic information
     // about the program, which can be useful for layers and tools to provide
     // more debug information.
-    auto appInfo = vk::ApplicationInfo()
-                     .setPApplicationName("SS13 rogue-like")
-                     .setApplicationVersion(VK_MAKE_VERSION(1, 0, 0))
-                     .setPEngineName("LunarG SDK")
-                     .setEngineVersion(1)
-                     .setApiVersion(VK_API_VERSION_1_0);
+    auto appInfo = vk::ApplicationInfo();
+    appInfo.setPApplicationName("SS13 rogue-like");
+    appInfo.setApplicationVersion(VK_MAKE_VERSION(1, 0, 0));
+    appInfo.setPEngineName("LunarG SDK");
+    appInfo.setEngineVersion(1);
+    appInfo.setApiVersion(VK_API_VERSION_1_0);
 
     // VkInstanceCreateInfo is where the programmer specifies the layers and/or
     // extensions that are needed. For now, none are enabled.
-    auto instInfo = vk::InstanceCreateInfo()
-                      .setFlags(vk::InstanceCreateFlags())
-                      .setPApplicationInfo(&appInfo)
-                      .setEnabledExtensionCount(static_cast<uint32_t>(instanceExtensions.size()))
-                      .setPpEnabledExtensionNames(instanceExtensions.data())
-                      .setEnabledLayerCount(static_cast<uint32_t>(layers.size()))
-                      .setPpEnabledLayerNames(layers.data());
+    auto instInfo = vk::InstanceCreateInfo();
+    instInfo.setFlags(vk::InstanceCreateFlags());
+    instInfo.setPApplicationInfo(&appInfo);
+    instInfo.setEnabledExtensionCount(static_cast<uint32_t>(instanceExtensions.size()));
+    instInfo.setPpEnabledExtensionNames(instanceExtensions.data());
+    instInfo.setEnabledLayerCount(static_cast<uint32_t>(layers.size()));
+    instInfo.setPpEnabledLayerNames(layers.data());
 
     // Create the Vulkan instance.
     try
@@ -104,8 +105,8 @@ void Renderer::initSurface(GLFWwindow* window)
         std::cout << "Error creating surface" << std::endl;
         throw;
     }
-    vk::SurfaceKHRDeleter deleter(m_instance.get(), nullptr);
-    m_surface = vk::UniqueSurfaceKHR(vk::SurfaceKHR(surf), deleter);
+    //vk::SurfaceKHRDeleter deleter(m_instance.get(), nullptr);
+    m_surface = vk::UniqueSurfaceKHR(vk::SurfaceKHR(surf), m_instance.get());
 }
 
 bool Renderer::fillQueueFamilies(vk::PhysicalDevice& gpu)
@@ -209,18 +210,18 @@ void Renderer::initDevice(const std::vector<const char*>& requestedDeviceExtensi
     float queuePriority = 1.0f;
     for(const auto& queueFamily : uniqueQueueFamilies)
     {
-        auto devQueueCreateInfo = vk::DeviceQueueCreateInfo()
-                                    .setQueueFamilyIndex(queueFamily)
-                                    .setQueueCount(1)
-                                    .setPQueuePriorities(&queuePriority);
+        auto devQueueCreateInfo = vk::DeviceQueueCreateInfo();
+        devQueueCreateInfo.setQueueFamilyIndex(queueFamily);
+        devQueueCreateInfo.setQueueCount(1);
+        devQueueCreateInfo.setPQueuePriorities(&queuePriority);
         queueCreateInfos.push_back(devQueueCreateInfo);
     }
 
-    auto devCreateInfo = vk::DeviceCreateInfo()
-                           .setQueueCreateInfoCount(static_cast<uint32_t>(queueCreateInfos.size()))
-                           .setPQueueCreateInfos(queueCreateInfos.data())
-                           .setEnabledExtensionCount(static_cast<uint32_t>(requestedDeviceExtensions.size()))
-                           .setPpEnabledExtensionNames(requestedDeviceExtensions.data());
+    auto devCreateInfo = vk::DeviceCreateInfo();
+    devCreateInfo.setQueueCreateInfoCount(static_cast<uint32_t>(queueCreateInfos.size()));
+    devCreateInfo.setPQueueCreateInfos(queueCreateInfos.data());
+    devCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(requestedDeviceExtensions.size()));
+    devCreateInfo.setPpEnabledExtensionNames(requestedDeviceExtensions.data());
 
     try
     {
@@ -315,34 +316,32 @@ void Renderer::initSwapchain(vk::Extent2D desiredExtent)
         imageCount = capabilities.maxImageCount;
     }
 
-    auto swapCreateInfo = vk::SwapchainCreateInfoKHR()
-                            .setMinImageCount(imageCount)
-                            .setImageFormat(surfaceFormat.format)
-                            .setImageColorSpace(surfaceFormat.colorSpace)
-                            .setImageExtent(extent)
-                            .setImageArrayLayers(1)
-                            .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
-                            .setPreTransform(capabilities.currentTransform)
-                            .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
-                            .setPresentMode(presentMode)
-                            .setClipped(true)
-                            .setOldSwapchain(m_swapchain.get())
-                            .setSurface(m_surface.get());
+    auto swapCreateInfo = vk::SwapchainCreateInfoKHR();
+    swapCreateInfo.setMinImageCount(imageCount);
+    swapCreateInfo.setImageFormat(surfaceFormat.format);
+    swapCreateInfo.setImageColorSpace(surfaceFormat.colorSpace);
+    swapCreateInfo.setImageExtent(extent);
+    swapCreateInfo.setImageArrayLayers(1);
+    swapCreateInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+    swapCreateInfo.setPreTransform(capabilities.currentTransform);
+    swapCreateInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
+    swapCreateInfo.setPresentMode(presentMode);
+    swapCreateInfo.setClipped(true);
+    swapCreateInfo.setOldSwapchain(m_swapchain.get());
+    swapCreateInfo.setSurface(m_surface.get());
 
     uint32_t queueFamilyIndices[] = { m_graphicsFamilyIdx, m_presentFamilyIdx };
     if(m_graphicsFamilyIdx != m_presentFamilyIdx)
     {
-        swapCreateInfo
-          .setImageSharingMode(vk::SharingMode::eConcurrent)
-          .setQueueFamilyIndexCount(2)
-          .setPQueueFamilyIndices(queueFamilyIndices);
+        swapCreateInfo.setImageSharingMode(vk::SharingMode::eConcurrent);
+        swapCreateInfo.setQueueFamilyIndexCount(2);
+        swapCreateInfo.setPQueueFamilyIndices(queueFamilyIndices);
     }
     else
     {
-        swapCreateInfo
-          .setImageSharingMode(vk::SharingMode::eExclusive)
-          .setQueueFamilyIndexCount(0)
-          .setPQueueFamilyIndices(nullptr);
+        swapCreateInfo.setImageSharingMode(vk::SharingMode::eExclusive);
+        swapCreateInfo.setQueueFamilyIndexCount(0);
+        swapCreateInfo.setPQueueFamilyIndices(nullptr);
     }
 
     try
@@ -375,20 +374,23 @@ void Renderer::initImageViews()
 
     for(const auto& image : m_swapchainImages)
     {
-        auto imageViewCreateInfo = vk::ImageViewCreateInfo()
-                                     .setViewType(vk::ImageViewType::e2D)
-                                     .setFormat(m_swapchainFormat)
-                                     .setComponents(vk::ComponentMapping(vk::ComponentSwizzle::eIdentity,
-                                                                         vk::ComponentSwizzle::eIdentity,
-                                                                         vk::ComponentSwizzle::eIdentity,
-                                                                         vk::ComponentSwizzle::eIdentity))
-                                     .setSubresourceRange(vk::ImageSubresourceRange()
-                                                            .setAspectMask(vk::ImageAspectFlagBits::eColor)
-                                                            .setBaseArrayLayer(0)
-                                                            .setBaseMipLevel(0)
-                                                            .setLayerCount(1)
-                                                            .setLevelCount(1))
-                                     .setImage(image);
+        auto imageViewCreateInfo = vk::ImageViewCreateInfo();
+        imageViewCreateInfo.setViewType(vk::ImageViewType::e2D);
+        imageViewCreateInfo.setFormat(m_swapchainFormat);
+        imageViewCreateInfo.setComponents(
+            vk::ComponentMapping(
+                vk::ComponentSwizzle::eIdentity,
+                vk::ComponentSwizzle::eIdentity,
+                vk::ComponentSwizzle::eIdentity,
+                vk::ComponentSwizzle::eIdentity));
+        imageViewCreateInfo.setSubresourceRange(
+            vk::ImageSubresourceRange()
+            .setAspectMask(vk::ImageAspectFlagBits::eColor)
+            .setBaseArrayLayer(0)
+            .setBaseMipLevel(0)
+            .setLayerCount(1)
+            .setLevelCount(1));
+        imageViewCreateInfo.setImage(image);
 
         try
         {
@@ -449,26 +451,30 @@ void Renderer::endRender()
 
     std::vector<vk::PipelineStageFlags> waitStages = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
 
-    const auto submitInfo = vk::SubmitInfo()
-                            .setCommandBufferCount(1)
-                            .setPCommandBuffers(&m_commandBuffers[m_currentImageIndex].get())
-                            .setPWaitSemaphores(&m_imageAvailableSemaphores[m_currentFrameIndex].get())
-                            .setWaitSemaphoreCount(1)
-                            .setPWaitDstStageMask(waitStages.data())
-                            .setPSignalSemaphores(&m_renderFinishedSemaphores[m_currentFrameIndex].get())
-                            .setSignalSemaphoreCount(1);
+    std::vector<vk::Semaphore> waitSemaphores = {m_imageAvailableSemaphores[m_currentFrameIndex].get()};
+    std::vector<vk::Semaphore> signalSemaphores = {m_renderFinishedSemaphores[m_currentFrameIndex].get()};
+    std::vector<vk::CommandBuffer> submitCommandBuffer = {m_commandBuffers[m_currentImageIndex].get()};
+
+    auto submitInfo = vk::SubmitInfo();
+    submitInfo.setPCommandBuffers(submitCommandBuffer.data());
+    submitInfo.setCommandBufferCount(static_cast<uint32_t>(submitCommandBuffer.size()));
+    submitInfo.setPWaitSemaphores(waitSemaphores.data());
+    submitInfo.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()));
+    submitInfo.setPWaitDstStageMask(waitStages.data());
+    submitInfo.setPSignalSemaphores(signalSemaphores.data());
+    submitInfo.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()));
 
     m_queue.submit(submitInfo, m_inFlightFences[m_currentImageIndex].get());
 }
 
 void Renderer::present()
 {
-    const auto presentInfo = vk::PresentInfoKHR()
-                                .setSwapchainCount(1)
-                                .setPSwapchains(&m_swapchain.get())
-                                .setPImageIndices(&m_currentImageIndex)
-                                .setPWaitSemaphores(&m_renderFinishedSemaphores[m_currentFrameIndex].get())
-                                .setWaitSemaphoreCount(1);
+    auto presentInfo = vk::PresentInfoKHR();
+    presentInfo.setSwapchainCount(1);
+    presentInfo.setPSwapchains(&m_swapchain.get());
+    presentInfo.setPImageIndices(&m_currentImageIndex);
+    presentInfo.setPWaitSemaphores(&m_renderFinishedSemaphores[m_currentFrameIndex].get());
+    presentInfo.setWaitSemaphoreCount(1);
     m_presentQueue.presentKHR(presentInfo);
     m_currentFrameIndex = (m_currentFrameIndex + 1) % m_inFlightFences.size();
 }
@@ -480,41 +486,40 @@ void Renderer::waitForIdle()
 
 void Renderer::initRenderPass()
 {
-    // todo: Modernize!
-    auto colorAttachment = vk::AttachmentDescription()
-                             .setFormat(m_swapchainFormat)
-                             .setSamples(vk::SampleCountFlagBits::e1)
-                             .setLoadOp(vk::AttachmentLoadOp::eClear)
-                             .setStoreOp(vk::AttachmentStoreOp::eStore)
-                             .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-                             .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-                             .setInitialLayout(vk::ImageLayout::eUndefined)
-                             .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+    auto colorAttachment = vk::AttachmentDescription();
+    colorAttachment.setFormat(m_swapchainFormat);
+    colorAttachment.setSamples(vk::SampleCountFlagBits::e1);
+    colorAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
+    colorAttachment.setStoreOp(vk::AttachmentStoreOp::eStore);
+    colorAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    colorAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
+    colorAttachment.setInitialLayout(vk::ImageLayout::eUndefined);
+    colorAttachment.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 
-    auto colorAttachmentRef = vk::AttachmentReference()
-                                .setAttachment(0)
-                                .setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    auto colorAttachmentRef = vk::AttachmentReference();
+    colorAttachmentRef.setAttachment(0);
+    colorAttachmentRef.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
-    auto subpass = vk::SubpassDescription()
-                     .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-                     .setColorAttachmentCount(1)
-                     .setPColorAttachments(&colorAttachmentRef);
+    auto subpass = vk::SubpassDescription();
+    subpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    subpass.setColorAttachmentCount(1);
+    subpass.setPColorAttachments(&colorAttachmentRef);
 
-    auto dependency = vk::SubpassDependency()
-                        .setSrcSubpass(VK_SUBPASS_EXTERNAL)
-                        .setDstSubpass(0)
-                        .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-                        .setSrcAccessMask(vk::AccessFlags())
-                        .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-                        .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+    auto dependency = vk::SubpassDependency();
+    dependency.setSrcSubpass(VK_SUBPASS_EXTERNAL);
+    dependency.setDstSubpass(0);
+    dependency.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    dependency.setSrcAccessMask(vk::AccessFlags());
+    dependency.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    dependency.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
 
-    auto renderPassCreateInfo = vk::RenderPassCreateInfo()
-                                  .setAttachmentCount(1)
-                                  .setPAttachments(&colorAttachment)
-                                  .setSubpassCount(1)
-                                  .setPSubpasses(&subpass)
-                                  .setPDependencies(&dependency)
-                                  .setDependencyCount(1);
+    auto renderPassCreateInfo = vk::RenderPassCreateInfo();
+    renderPassCreateInfo.setAttachmentCount(1);
+    renderPassCreateInfo.setPAttachments(&colorAttachment);
+    renderPassCreateInfo.setSubpassCount(1);
+    renderPassCreateInfo.setPSubpasses(&subpass);
+    renderPassCreateInfo.setPDependencies(&dependency);
+    renderPassCreateInfo.setDependencyCount(1);
 
     try
     {
@@ -529,9 +534,9 @@ void Renderer::initRenderPass()
 
 void Renderer::initPipelineCache()
 {
-    auto pipelineCacheCreateInfo = vk::PipelineCacheCreateInfo()
-                                     .setInitialDataSize(0U)
-                                     .setPInitialData(nullptr);
+    auto pipelineCacheCreateInfo = vk::PipelineCacheCreateInfo();
+    pipelineCacheCreateInfo.setInitialDataSize(0U);
+    pipelineCacheCreateInfo.setPInitialData(nullptr);
 
     try
     {
@@ -548,72 +553,75 @@ void Renderer::initPipeline(const Material& mat)
 {
     auto[vertShader, fragShader] = mat.getShaders();
 
-    auto vertShaderStageInfo = vk::PipelineShaderStageCreateInfo()
-                                 .setStage(vk::ShaderStageFlagBits::eVertex)
-                                 .setModule(vertShader)
-                                 .setPName("main");
+    auto vertShaderStageInfo = vk::PipelineShaderStageCreateInfo();
+    vertShaderStageInfo.setStage(vk::ShaderStageFlagBits::eVertex);
+    vertShaderStageInfo.setModule(vertShader);
+    vertShaderStageInfo.setPName("main");
 
-    auto fragShaderBinStageInfo = vk::PipelineShaderStageCreateInfo()
-                                 .setStage(vk::ShaderStageFlagBits::eFragment)
-                                 .setModule(fragShader)
-                                 .setPName("main");
+    auto fragShaderBinStageInfo = vk::PipelineShaderStageCreateInfo();
+    fragShaderBinStageInfo.setStage(vk::ShaderStageFlagBits::eFragment);
+    fragShaderBinStageInfo.setModule(fragShader);
+    fragShaderBinStageInfo.setPName("main");
 
     auto shaderStages = std::vector<vk::PipelineShaderStageCreateInfo>{ vertShaderStageInfo, fragShaderBinStageInfo };
 
-    auto vertexInputInfo = vk::PipelineVertexInputStateCreateInfo()
-                             .setVertexBindingDescriptionCount(0)
-                             .setVertexAttributeDescriptionCount(0);
+    auto vertexInputInfo = vk::PipelineVertexInputStateCreateInfo();
+    vertexInputInfo.setVertexBindingDescriptionCount(0);
+    vertexInputInfo.setVertexAttributeDescriptionCount(0);
 
-    auto inputAssembly = vk::PipelineInputAssemblyStateCreateInfo()
-                           .setTopology(vk::PrimitiveTopology::eTriangleList)
-                           .setPrimitiveRestartEnable(false);
+    auto inputAssembly = vk::PipelineInputAssemblyStateCreateInfo();
+    inputAssembly.setTopology(vk::PrimitiveTopology::eTriangleList);
+    inputAssembly.setPrimitiveRestartEnable(false);
 
-    auto viewport = vk::Viewport()
-                      .setX(0.0f)
-                      .setY(0.0f)
-                      .setWidth(static_cast<float>(m_swapchainExtent.width))
-                      .setHeight(static_cast<float>(m_swapchainExtent.height))
-                      .setMinDepth(0.0f)
-                      .setMaxDepth(1.0f);
+    auto viewport = vk::Viewport();
+    viewport.setX(0.0f);
+    viewport.setY(0.0f);
+    viewport.setWidth(static_cast<float>(m_swapchainExtent.width));
+    viewport.setHeight(static_cast<float>(m_swapchainExtent.height));
+    viewport.setMinDepth(0.0f);
+    viewport.setMaxDepth(1.0f);
 
-    auto scissor = vk::Rect2D()
-                     .setOffset({ 0, 0 })
-                     .setExtent(m_swapchainExtent);
+    auto scissor = vk::Rect2D();
+    scissor.setOffset({ 0, 0 });
+    scissor.setExtent(m_swapchainExtent);
 
-    auto viewportState = vk::PipelineViewportStateCreateInfo()
-                           .setViewportCount(1)
-                           .setPViewports(&viewport)
-                           .setScissorCount(1)
-                           .setPScissors(&scissor);
+    auto viewportState = vk::PipelineViewportStateCreateInfo();
+    viewportState.setViewportCount(1);
+    viewportState.setPViewports(&viewport);
+    viewportState.setScissorCount(1);
+    viewportState.setPScissors(&scissor);
 
-    auto rasterizer = vk::PipelineRasterizationStateCreateInfo()
-                        .setDepthClampEnable(false)
-                        .setRasterizerDiscardEnable(false)
-                        .setPolygonMode(vk::PolygonMode::eFill)
-                        .setLineWidth(1.0f)
-                        .setCullMode(vk::CullModeFlagBits::eBack)
-                        .setFrontFace(vk::FrontFace::eClockwise)
-                        .setDepthBiasEnable(true);
+    auto rasterizer = vk::PipelineRasterizationStateCreateInfo();
+    rasterizer.setDepthClampEnable(false);
+    rasterizer.setRasterizerDiscardEnable(false);
+    rasterizer.setPolygonMode(vk::PolygonMode::eFill);
+    rasterizer.setLineWidth(1.0f);
+    rasterizer.setCullMode(vk::CullModeFlagBits::eBack);
+    rasterizer.setFrontFace(vk::FrontFace::eClockwise);
+    rasterizer.setDepthBiasEnable(true);
 
-    auto multisampling = vk::PipelineMultisampleStateCreateInfo()
-                           .setSampleShadingEnable(false)
-                           .setRasterizationSamples(vk::SampleCountFlagBits::e1);
+    auto multisampling = vk::PipelineMultisampleStateCreateInfo();
+    multisampling.setSampleShadingEnable(false);
+    multisampling.setRasterizationSamples(vk::SampleCountFlagBits::e1);
 
-    auto colorBlendAttachment = vk::PipelineColorBlendAttachmentState()
-                                  .setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-                                                     vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA)
-                                  .setBlendEnable(false);
+    auto colorBlendAttachment = vk::PipelineColorBlendAttachmentState();
+    colorBlendAttachment.colorWriteMask =
+        vk::ColorComponentFlagBits::eR |
+        vk::ColorComponentFlagBits::eG |
+        vk::ColorComponentFlagBits::eB |
+        vk::ColorComponentFlagBits::eA;
+    colorBlendAttachment.blendEnable = false;
 
-    auto colorBlending = vk::PipelineColorBlendStateCreateInfo()
-                           .setLogicOpEnable(false)
-                           .setLogicOp(vk::LogicOp::eCopy)
-                           .setAttachmentCount(1)
-                           .setPAttachments(&colorBlendAttachment)
-                           .setBlendConstants({ { 0.0f, 0.0f, 0.0f, 0.0f } });
+    auto colorBlending = vk::PipelineColorBlendStateCreateInfo();
+    colorBlending.setLogicOpEnable(false);
+    colorBlending.setLogicOp(vk::LogicOp::eCopy);
+    colorBlending.setAttachmentCount(1);
+    colorBlending.setPAttachments(&colorBlendAttachment);
+    colorBlending.setBlendConstants({ { 0.0f, 0.0f, 0.0f, 0.0f } });
 
-    auto pipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo()
-                                      .setSetLayoutCount(0U)
-                                      .setPushConstantRangeCount(0U);
+    auto pipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo();
+    pipelineLayoutCreateInfo.setSetLayoutCount(0U);
+    pipelineLayoutCreateInfo.setPushConstantRangeCount(0U);
 
     try
     {
@@ -625,19 +633,19 @@ void Renderer::initPipeline(const Material& mat)
         throw;
     }
 
-    auto pipelineCreateInfo = vk::GraphicsPipelineCreateInfo()
-                                .setStageCount(static_cast<uint32_t>(shaderStages.size()))
-                                .setPStages(shaderStages.data())
-                                .setPVertexInputState(&vertexInputInfo)
-                                .setPInputAssemblyState(&inputAssembly)
-                                .setPViewportState(&viewportState)
-                                .setPRasterizationState(&rasterizer)
-                                .setPMultisampleState(&multisampling)
-                                .setPColorBlendState(&colorBlending)
-                                .setLayout(m_pipelineLayout.get())
-                                .setRenderPass(m_renderPass.get())
-                                .setSubpass(0)
-                                .setBasePipelineHandle(nullptr);
+    auto pipelineCreateInfo = vk::GraphicsPipelineCreateInfo();
+    pipelineCreateInfo.setStageCount(static_cast<uint32_t>(shaderStages.size()));
+    pipelineCreateInfo.setPStages(shaderStages.data());
+    pipelineCreateInfo.setPVertexInputState(&vertexInputInfo);
+    pipelineCreateInfo.setPInputAssemblyState(&inputAssembly);
+    pipelineCreateInfo.setPViewportState(&viewportState);
+    pipelineCreateInfo.setPRasterizationState(&rasterizer);
+    pipelineCreateInfo.setPMultisampleState(&multisampling);
+    pipelineCreateInfo.setPColorBlendState(&colorBlending);
+    pipelineCreateInfo.setLayout(m_pipelineLayout.get());
+    pipelineCreateInfo.setRenderPass(m_renderPass.get());
+    pipelineCreateInfo.setSubpass(0);
+    pipelineCreateInfo.setBasePipelineHandle(nullptr);
 
     try
     {
@@ -657,13 +665,13 @@ void Renderer::initFramebuffers()
     {
         std::vector<vk::ImageView> attachments = { m_swapChainImageViews[i].get() };
 
-        auto framebufferCreateInfo = vk::FramebufferCreateInfo()
-                                       .setRenderPass(m_renderPass.get())
-                                       .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
-                                       .setPAttachments(attachments.data())
-                                       .setWidth(m_swapchainExtent.width)
-                                       .setHeight(m_swapchainExtent.height)
-                                       .setLayers(1);
+        auto framebufferCreateInfo = vk::FramebufferCreateInfo();
+        framebufferCreateInfo.setRenderPass(m_renderPass.get());
+        framebufferCreateInfo.setAttachmentCount(static_cast<uint32_t>(attachments.size()));
+        framebufferCreateInfo.setPAttachments(attachments.data());
+        framebufferCreateInfo.setWidth(m_swapchainExtent.width);
+        framebufferCreateInfo.setHeight(m_swapchainExtent.height);
+        framebufferCreateInfo.setLayers(1);
 
         try
         {
@@ -679,19 +687,19 @@ void Renderer::initFramebuffers()
 
 void Renderer::initCommandPool()
 {
-    const auto cpci = vk::CommandPoolCreateInfo()
-                        .setQueueFamilyIndex(m_graphicsFamilyIdx)
-                        .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+    auto cpci = vk::CommandPoolCreateInfo();
+    cpci.setQueueFamilyIndex(m_graphicsFamilyIdx);
+    cpci.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
     m_commandPool = m_device->createCommandPoolUnique(cpci);
 }
 
 void Renderer::initCommandBuffers()
 {
-     const auto cbci = vk::CommandBufferAllocateInfo()
-                        .setCommandPool(m_commandPool.get())
-                        .setCommandBufferCount(static_cast<uint32_t>(m_framebuffers.size()))
-                        .setLevel(vk::CommandBufferLevel::ePrimary);
+    auto cbci = vk::CommandBufferAllocateInfo();
+    cbci.setCommandPool(m_commandPool.get());
+    cbci.setCommandBufferCount(static_cast<uint32_t>(m_framebuffers.size()));
+    cbci.setLevel(vk::CommandBufferLevel::ePrimary);
 
     m_commandBuffers = m_device->allocateCommandBuffersUnique(cbci);
 }
@@ -699,8 +707,7 @@ void Renderer::initCommandBuffers()
 void Renderer::initSyncObjects()
 {
     const auto sci = vk::SemaphoreCreateInfo();
-    const auto fci = vk::FenceCreateInfo()
-        .setFlags(vk::FenceCreateFlagBits::eSignaled);
+    auto fci = vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
     for(size_t i = 0; i < 3; ++i)
     {
         m_imageAvailableSemaphores.push_back(m_device->createSemaphoreUnique(sci));
