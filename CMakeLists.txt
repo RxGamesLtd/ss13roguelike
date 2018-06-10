@@ -30,20 +30,27 @@ set(shader_sources
 )
 source_group("Shaders" FILES ${shader_sources})
 
+add_custom_target(Shaders ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${shader_sources} ${CMAKE_BINARY_DIR}/shaders
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    SOURCES ${shader_sources}
+)
+
 set(all_src
     ${main_sources}
-    ${shader_sources}
 )
 
 add_executable(SS13RogueLike ${all_src})
 target_link_libraries(SS13RogueLike PRIVATE glfw vulkan libshaderc glm gsl)
 target_compile_options(SS13RogueLike PRIVATE /WX /W3)
-target_compile_definitions(SS13RogueLike PRIVATE "DEBUG_VULKAN")
+target_compile_definitions(SS13RogueLike PRIVATE $<$<CONFIG:Debug>:"DEBUG_VULKAN">)
 set_target_properties(SS13RogueLike PROPERTIES
     CXX_STANDARD 17
     FOLDER "Executable"
     OUTPUT_NAME_DEBUG "SS13RogueLike_d"
     OUTPUT_NAME_RELEASE "SS13RogueLike")
+add_dependencies(SS13RogueLike Shaders)
 
 install(TARGETS SS13RogueLike
     RUNTIME DESTINATION "bin"

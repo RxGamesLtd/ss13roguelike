@@ -1,8 +1,10 @@
+set(ARCH x64)
+
 add_library(glfw SHARED IMPORTED GLOBAL)
-set(GLFW_DLL "${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib-vc2015/glfw3.dll")
+set(GLFW_DLL "${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/${ARCH}/glfw3.dll")
 set_target_properties(glfw PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/glfw/include"
-    IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib-vc2015/glfw3dll.lib"
+    IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/${ARCH}/glfw3dll.lib"
     IMPORTED_LOCATION "${GLFW_DLL}")
 file(COPY ${GLFW_DLL} DESTINATION ${CMAKE_BINARY_DIR})
 install(FILES ${GLFW_DLL} DESTINATION "bin")

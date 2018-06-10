@@ -34,12 +34,12 @@ private:
     void initImageViews();
     void initPipelineCache();
     void initCommandPool();
-    void initSyncObjects();
 
     void initRenderPass();
     void initPipeline(const Material& mat);
     void initFramebuffers();
     void initCommandBuffers();
+    void initSyncObjects();
 
 protected:
     bool fillQueueFamilies(vk::PhysicalDevice& gpu);

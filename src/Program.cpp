@@ -1,11 +1,10 @@
+#include "targetver.hpp"
 #include "config.hpp"
 #include "renderer.hpp"
 #include "material.hpp"
 
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
+#include "GLFW/glfw_vulkan.h"
 
-#include "targetver.hpp"
 #include <iostream>
 #include <thread>
 
@@ -66,7 +65,7 @@ int main(int argc, char *argv[])
 
         // glfwWindowHint(GLFW_RESIZABLE, 0);
         // glfwWindowHint(GLFW_RESIZABLE, 0);
-        const auto window = glfwCreateWindow(1024, 768, "TestApp:Initilizing", nullptr, nullptr);
+        const auto window = glfwCreateWindow(1024, 768, "TestApp:Initializing", nullptr, nullptr);
 
         glfwSetKeyCallback(window, keyCallback);
 
@@ -92,7 +91,7 @@ int main(int argc, char *argv[])
             // do render
             renderer.beginRender();
 
-            renderer.draw(3, 1, 0, 0);
+            renderer.draw(6, 1, 0, 0);
 
             renderer.endRender();
             renderer.present();

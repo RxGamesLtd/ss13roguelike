@@ -84,6 +84,7 @@ Renderer::Renderer(
         initSwapchain(getWindowSize(window));
         initImageViews();
         initCommandPool();
+        initPipelineCache();
 
         m_isInited = true;
     }
@@ -576,19 +577,19 @@ void Renderer::initPipelineCache()
 
 void Renderer::initPipeline(const Material& mat)
 {
-    const auto[vertShader, fragShader] = mat.getShaders();
+    const auto shaders = mat.getShaders();
 
     const auto vertShaderStageInfo = vk::PipelineShaderStageCreateInfo()
         .setStage(vk::ShaderStageFlagBits::eVertex)
-        .setModule(vertShader)
+        .setModule(shaders.vertex)
         .setPName("main");
 
-    const auto fragShaderBinStageInfo = vk::PipelineShaderStageCreateInfo()
+    const auto fragShaderStageInfo = vk::PipelineShaderStageCreateInfo()
         .setStage(vk::ShaderStageFlagBits::eFragment)
-        .setModule(fragShader)
+        .setModule(shaders.fragment)
         .setPName("main");
 
-    const auto shaderStages = std::array<vk::PipelineShaderStageCreateInfo, 2>{ vertShaderStageInfo, fragShaderBinStageInfo };
+    const auto shaderStages = std::array<vk::PipelineShaderStageCreateInfo, 2>{ vertShaderStageInfo, fragShaderStageInfo };
 
     const auto vertexInputInfo = vk::PipelineVertexInputStateCreateInfo()
         .setVertexBindingDescriptionCount(0)
