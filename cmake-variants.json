@@ -8,6 +8,11 @@
                 "short": "Debug",
                 "buildType": "Debug",
                 "long": "Development configuration"
+            },
+            "release":{
+                "short": "Release",
+                "buildType": "Release",
+                "long": "Release configuration"
             }
         }
     }

@@ -12,7 +12,7 @@ std::string readFile(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
-    if(!file.is_open())
+    if (!file.is_open())
     {
         throw std::runtime_error("failed to open file!");
     }
@@ -31,6 +31,7 @@ std::string readFile(const std::string& filename)
 vk::UniqueShaderModule createShaderModule(const vk::Device& device, const std::vector<uint32_t>& code)
 {
     auto createInfo = vk::ShaderModuleCreateInfo();
+
     createInfo.setCodeSize(code.size() * sizeof(uint32_t));
     createInfo.setPCode(code.data());
 
@@ -52,8 +53,9 @@ void Material::compileShaders()
 
     shaderc::Compiler shaderCompiler;
     shaderc::CompileOptions shaderCompilerOptions;
+
     shaderCompilerOptions.SetOptimizationLevel(shaderc_optimization_level_size);
-    if(!shaderCompiler.IsValid())
+    if (!shaderCompiler.IsValid())
     {
         throw std::runtime_error("Failed to initilize shader compiler.");
     }
@@ -69,11 +71,11 @@ void Material::compileShaders()
         m_shaderName.c_str(),
         shaderCompilerOptions);
 
-    if(vertShaderBin.GetCompilationStatus() != shaderc_compilation_status_success)
+    if (vertShaderBin.GetCompilationStatus() != shaderc_compilation_status_success)
     {
         std::cout << "Vert shader error:" << vertShaderBin.GetErrorMessage() << std::endl;
     }
-    if(fragShaderBin.GetCompilationStatus() != shaderc_compilation_status_success)
+    if (fragShaderBin.GetCompilationStatus() != shaderc_compilation_status_success)
     {
         std::cout << "Frag shader error:" << fragShaderBin.GetErrorMessage() << std::endl;
     }
@@ -90,5 +92,5 @@ void Material::compileShaders()
 
 Shaders Material::getShaders() const
 {
-    return {m_vertexShader.get(), m_fragmentShader.get()};
+    return { m_vertexShader.get(), m_fragmentShader.get() };
 }

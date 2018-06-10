@@ -2,8 +2,6 @@
 
 #include "vulkan/vulkan.hpp"
 
-#include <chrono>
-
 struct GLFWwindow;
 
 class Material;
@@ -11,22 +9,25 @@ class Material;
 class Renderer
 {
 public:
-    Renderer(GLFWwindow* window, const std::vector<const char*>& instanceExtensions,
+    Renderer(const std::string& appName, GLFWwindow* window, const std::vector<const char*>& instanceExtensions,
              const std::vector<const char*>& requestedDeviceExtensions);
 
-    bool isValid() { return m_isInited; }
+    bool isValid() const { return m_isInited; }
 
     vk::Device getDevice() const { return m_device.get(); }
 
     void prepairFor(const Material& mat);
     void beginRender();
+
+    void draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance);
+
     void endRender();
     void present();
 
     void waitForIdle();
 
 private:
-    void initInstance(const std::vector<const char*>& instanceExtensions);
+    void initInstance(const std::string& appName, const std::vector<const char*>& instanceExtensions);
     void initSurface(GLFWwindow* window);
     void initDevice(const std::vector<const char*>& requestedDeviceExtensions);
     void initSwapchain(vk::Extent2D desiredExtent);
@@ -45,7 +46,7 @@ protected:
     bool isDeviceCompatible(const vk::PhysicalDevice& device,
                              const std::vector<const char*>& requestedDeviceExtensions);
 
-public:
+private:
     // Instance block
     vk::UniqueInstance m_instance;
     vk::PhysicalDevice m_gpu;
@@ -87,5 +88,4 @@ public:
 
     // init
     bool m_isInited;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_frameStartTime;
 };

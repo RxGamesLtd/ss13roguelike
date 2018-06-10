@@ -4,20 +4,10 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
-#include "vulkan/vulkan.hpp"
 
-#include <iostream>
 #include "targetver.hpp"
-
-static void testStuff(Renderer& r)
-{
-    r.beginRender();
-
-    r.m_commandBuffers[r.m_currentImageIndex]->draw(3, 1, 0, 0);
-
-    r.endRender();
-    r.present();
-}
+#include <iostream>
+#include <thread>
 
 inline std::vector<const char*>getRequiredInstanceExtensions()
 {
@@ -57,9 +47,10 @@ inline void keyCallback(GLFWwindow* window, int key, int scancode, int action, i
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     std::ios_base::sync_with_stdio(false);
+
     if (!glfwInit())
     {
         std::cout << "Error on init GLFW" << std::endl;
@@ -75,35 +66,43 @@ int main()
 
         // glfwWindowHint(GLFW_RESIZABLE, 0);
         // glfwWindowHint(GLFW_RESIZABLE, 0);
-        auto window = glfwCreateWindow(1024, 768, "TestApp:Initilizing", nullptr, nullptr);
+        const auto window = glfwCreateWindow(1024, 768, "TestApp:Initilizing", nullptr, nullptr);
 
         glfwSetKeyCallback(window, keyCallback);
 
-        auto instanceExtensions = getRequiredInstanceExtensions();
-        auto deviceExtensions   = getRequiredDeviceExtensions();
+        const auto instanceExtensions = getRequiredInstanceExtensions();
+        const auto deviceExtensions   = getRequiredDeviceExtensions();
 
+        auto name = std::string("SS13Roguelike");
         // init renderer
-        Renderer renderer(window, instanceExtensions, deviceExtensions);
+        auto renderer = Renderer(name, window, instanceExtensions, deviceExtensions);
 
         // init done
-        glfwSetWindowTitle(window, "TestApp");
+        glfwSetWindowTitle(window, name.c_str());
 
-
-        auto mat = Material(renderer, "triangle");
+        const auto mat = Material(renderer, "triangle");
         renderer.prepairFor(mat);
 
+        const auto targetRenderTime = static_cast<int64_t>(0.016666 * 1000000);
         while (!glfwWindowShouldClose(window))
         {
+            const auto frameStart = std::chrono::steady_clock::now();
             glfwPollEvents();
-            renderer.m_frameStartTime = std::chrono::high_resolution_clock::now();
 
             // do render
-            testStuff(renderer);
+            renderer.beginRender();
 
-            auto renderTime = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::high_resolution_clock::now() - renderer.m_frameStartTime).count();
-            double renderTimeD = renderTime / 1000000.0;
-            std::cout << "TPF " << renderTimeD << " FPS " << (1 / renderTimeD) << "\n";
+            renderer.draw(3, 1, 0, 0);
+
+            renderer.endRender();
+            renderer.present();
+
+            const auto renderTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - frameStart).count();
+            if(targetRenderTime > renderTime)
+            {
+                std::this_thread::sleep_for(std::chrono::microseconds(targetRenderTime - renderTime));
+            }
         }
         renderer.waitForIdle();
     }

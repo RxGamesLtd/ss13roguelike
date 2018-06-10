@@ -2,6 +2,8 @@
 
 #include "vulkan/vulkan.hpp"
 
+#include <string>
+
 class Renderer;
 
 struct Shaders
